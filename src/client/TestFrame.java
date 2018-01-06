@@ -6,13 +6,12 @@ import java.awt.*;
 public class TestFrame extends JFrame{
     public TestFrame(){
         setTitle("AirWars");
-
         Dialog dialog = new Dialog(this);
         dialog.pack();
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
 
-        GamePanel gamePanel = new GamePanel();
+        GamePanel gamePanel = new GamePanel("127.0.0.1",10001);
         Container container = getContentPane();
         container.add(gamePanel);
         setLocationRelativeTo(null);

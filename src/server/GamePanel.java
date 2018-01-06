@@ -10,6 +10,10 @@ import java.net.URL;
 import java.net.Socket;
 import java.util.Random;
 
+import element.EnemyPlane;
+import element.OurPlane;
+import element.Bullet;
+
 
 public class GamePanel extends JPanel implements Runnable,KeyListener{
     // Screen Size
@@ -65,15 +69,19 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     private Socket socket;
     private BufferedReader is;
     private PrintWriter os;
+     private ConnectThread connectThread;
 
-
-    public GamePanel(){
+    public GamePanel(int port){
         setPreferredSize(new Dimension(screenWidth,screenHeight));
         setFocusable(true);
         addKeyListener(this);
 
         init();
-        isRunning = true;
+
+     // start socket
+        connectThread = new ConnectThread(port);
+        connectThread.start();
+
         thread = new Thread(this);
      // start game
         thread.start();
@@ -296,6 +304,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                         && bullet[i].posY>enemyPlane2[j].posY
                         && bullet[i].posY<enemyPlane2[j].posY+40){
                     enemyPlane2[j].lifePointMinus();
+                    bullet[i].initLocation(-50,-50); // double kill
                     bullet[i].setToDraw(false);
                 }
             }
@@ -360,6 +369,24 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
 
     }
 
+
+    private void listenClient(int port){
+        try{
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try{
+                        server = new ServerSocket(port);
+                        socket = server.accept();
+                    }catch (IOException e){
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
     private class ConnectThread extends Thread{
         private int m_port;
 
@@ -369,10 +396,11 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
 
         public void run(){
             try{
-                server = new ServerSocket(m_port);
-                socket = server.accept();
+
+                System.out.println("Hello?");
                 is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 os = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                isRunning = true;
                 while (true){
                     try{
                         String s1 = is.readLine();
@@ -380,6 +408,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                         if(s1 == null){
                             continue;
                         }
+                        System.out.println(s1);
                         if(s1.startsWith("Close")){
                             socket.close();
                             is.close();

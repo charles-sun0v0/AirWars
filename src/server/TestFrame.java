@@ -13,7 +13,7 @@ public class TestFrame extends JFrame{
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
 
-        GamePanel gamePanel = new GamePanel();
+        GamePanel gamePanel = new GamePanel(10001);
         Container container = getContentPane();
         container.add(gamePanel);
         pack();

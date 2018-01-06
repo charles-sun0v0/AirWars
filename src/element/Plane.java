@@ -34,7 +34,7 @@ public Plane(){
 //            e.printStackTrace();
 //        }
         URL url = this.getClass().getResource("../image/explode"+(i+1)+".gif");
-        System.out.println(url);
+//        System.out.println(url);
         explodeImg[i] = Toolkit.getDefaultToolkit().getImage(url);
     }
 }

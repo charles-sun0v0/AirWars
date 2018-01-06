@@ -10,6 +10,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.Random;
 
+import element.EnemyPlane;
+import element.OurPlane;
+import element.Bullet;
 
 public class GamePanel extends JPanel implements Runnable,KeyListener{
     // Screen Size
@@ -57,6 +60,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     // Thread
     private Thread thread = null;
     private boolean isRunning = false;
+    private SetupConnection setupConnection = null;
 
     // sever and socket
     //socket
@@ -65,14 +69,19 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     private BufferedReader is;
     private PrintWriter os;
 
+    // message
+    private String message = "";
 
-    public GamePanel(){
+    public GamePanel(String ip,int port){
         setPreferredSize(new Dimension(screenWidth,screenHeight));
         setFocusable(true);
         addKeyListener(this);
 
+        message = "hello server!";
+        setupConnection = new SetupConnection(ip,port);
+        setupConnection.start();
+
         init();
-        isRunning = true;
         thread = new Thread(this);
      // start game
         thread.start();
@@ -295,6 +304,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                         && bullet[i].posY>enemyPlane2[j].posY
                         && bullet[i].posY<enemyPlane2[j].posY+40){
                     enemyPlane2[j].lifePointMinus();
+                    bullet[i].initLocation(-50,-50); // double kill
                     bullet[i].setToDraw(false);
                 }
             }
@@ -316,41 +326,41 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     public void keyPressed(KeyEvent e){
         int key = e.getKeyCode();
         switch (key){
-            case KeyEvent.VK_UP:{
-                playerPosY1 -= planStep;
+            case KeyEvent.VK_W:{
+                playerPosY2 -= planStep;
                 break;
             }
-            case KeyEvent.VK_DOWN:{
-                playerPosY1 += planStep;
+            case KeyEvent.VK_S:{
+                playerPosY2 += planStep;
                 break;
             }
-            case KeyEvent.VK_LEFT:{
-                playerPosX1 -= planStep;
+            case KeyEvent.VK_A:{
+                playerPosX2 -= planStep;
                 break;
             }
-            case KeyEvent.VK_RIGHT:{
-                playerPosX1 += planStep;
+            case KeyEvent.VK_D:{
+                playerPosX2 += planStep;
                 break;
             }
-            case KeyEvent.VK_SPACE:{
+            case KeyEvent.VK_TAB:{
                 shoot();
             }
             default:break;
         }
-        if(playerPosX1>screenWidth - OurPlane.planeWidth)
-            playerPosX1 = screenWidth - OurPlane.planeWidth;
-        if(playerPosX1 < 0){
-            playerPosX1 = 0;
+        if(playerPosX2>screenWidth - OurPlane.planeWidth)
+            playerPosX2 = screenWidth - OurPlane.planeWidth;
+        if(playerPosX2 < 0){
+            playerPosX2 = 0;
         }
 
-        if(playerPosY1 < 0){
-            playerPosY1 = 0;
+        if(playerPosY2 < 0){
+            playerPosY2 = 0;
         }
 
-        if(playerPosY1 > screenHeight - OurPlane.planeHeight){
-            playerPosY1 =screenHeight - OurPlane.planeHeight ;
+        if(playerPosY2 > screenHeight - OurPlane.planeHeight){
+            playerPosY2 =screenHeight - OurPlane.planeHeight ;
         }
-        player1.updateLocation(playerPosX1,playerPosY1);
+        player2.updateLocation(playerPosX2,playerPosY2);
     }
 
     public void keyReleased(KeyEvent e){}
@@ -375,6 +385,17 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                 socket = new Socket(m_ip, m_port);
                 is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 os = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+                isRunning = true;
+                os.println(message);
+                while (true){
+                    try{
+                    Thread.sleep(500);
+                    }catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                    os.println(message);
+                }
+
             }catch (IOException e){
                 e.printStackTrace();
             }

@@ -7,8 +7,8 @@ import java.net.URL;
 
 public class OurPlane extends Plane{
 
-    static final int planeWidth = 40;
-    static final int planeHeight = 70;
+    public static final int planeWidth = 40;
+    public static final int planeHeight = 70;
     public  OurPlane(){
         super();
         lifePoint = 3;

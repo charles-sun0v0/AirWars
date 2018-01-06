@@ -9,7 +9,7 @@ public class EnemyPlane extends Plane {
     public int ENEMYPLNE_CATECORY = 1; // 1,2,3
     public static final int planeWidth = 40;
     public static final int planeHeight = 80;
-    EnemyPlane(int type){
+    public EnemyPlane(int type){
         switch (type){
             case 1:
                 ENEMYPLNE_CATECORY = 1;break;

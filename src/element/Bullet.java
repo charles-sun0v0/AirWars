@@ -3,7 +3,6 @@ package element;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.ImageObserver;
-import java.io.File;
 import java.net.URL;
 
 public class Bullet {
@@ -23,7 +22,7 @@ public class Bullet {
     private Image img[] = null;
     private  int frameID = 0;
 
-    Bullet(){
+    public Bullet(){
         img = new Image[imgCount];
         for(int i = 0; i < imgCount; i++){
             URL url = this.getClass().getResource("/image/bullet_"+i+".png");
@@ -37,7 +36,8 @@ public class Bullet {
     }
 
     public void drawBullet(Graphics g, JPanel panel){
-        g.drawImage(img[frameID++],posX,posY,(ImageObserver)panel);
+        if(toDraw)
+            g.drawImage(img[frameID++],posX,posY,(ImageObserver)panel);
         if(frameID == imgCount){
             frameID = 0;
         }
