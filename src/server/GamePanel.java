@@ -53,8 +53,12 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     // Bullet
     private int bulletCount = 15;
     private Bullet bullet[] = null;
-    private long shootTime = 0L;
     private int sendID = 0;
+
+    // Bullet2
+    private  int bulletCount2 = 15;
+    private Bullet bullet2[] = null;
+    private int sendID2 = 0;
     private final int bulletUpOffset = 10;
     private final int bulletLeftOffset = 10;
 
@@ -78,10 +82,17 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
 
         init();
 
-     // start socket
-        connectThread = new ConnectThread(port);
-        connectThread.start();
+        // Trick !!! need synchronized () indeed
+        try{
+           os = new PrintWriter(new FileOutputStream(new File("out.txt")));
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+        }
 
+     // start socket
+        listenClient(port);
+
+        isRunning = true;
         thread = new Thread(this);
      // start game
         thread.start();
@@ -130,10 +141,24 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             bullet[i] = new Bullet();
         }
 
-        shootTime = System.currentTimeMillis();
+        bullet2 = new Bullet[bulletCount2];
+        for(int i =0; i < bulletCount2;i++){
+            bullet2[i] = new Bullet();
+        }
+
+
     }
 
     public void run(){
+//        if(!isRunning){
+//            try{
+//                wait();
+//            }catch (InterruptedException e){
+//                e.printStackTrace();
+//            }
+//        }else{
+//            notify();
+//        }
         while (isRunning){
             draw();
             try{
@@ -165,6 +190,10 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
         }
         for(int i =0; i < bulletCount;i++){
             bullet[i].drawBullet(g,this);
+        }
+
+        for(int i =0; i < bulletCount2;i++){
+            bullet2[i].drawBullet(g,this);
         }
 
         for(int i = 0; i < enemyCount1;i++){
@@ -214,9 +243,9 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     public void updateEnemy(){
         for(int i = 0; i < enemyCount1;i++){
             enemyPlane1[i].updateLocation();
-         //   System.out.print(enemyPlane1[i].posY);
             judgeEdge(enemyPlane1[i]);
-
+            String msg = "Enemy1|"+i+"|"+((enemyPlane1[i].isAlive())?1:0)+"|"+enemyPlane1[i].posX+"|"+enemyPlane1[i].posY;
+            sendMessage(msg);
         }
 
        // System.out.println(" ");
@@ -224,6 +253,8 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             enemyPlane2[i].updateLocation();
        //     System.out.print(enemyPlane2[i].posY);
             judgeEdge(enemyPlane2[i]);
+            String msg = "Enemy2|"+i+"|"+((enemyPlane2[i].isAlive())?1:0)+"|"+enemyPlane2[i].posX+"|"+enemyPlane2[i].posY;
+            sendMessage(msg);
         }
 
        // System.out.println(" ");
@@ -231,6 +262,8 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             enemyPlane3[i].updateLocation();
        //     System.out.print(enemyPlane3[i].posY);
             judgeEdge(enemyPlane3[i]);
+            String msg = "Enemy3|"+i+"|"+((enemyPlane3[i].isAlive())?1:0)+"|"+enemyPlane3[i].posX+"|"+enemyPlane3[i].posY;
+            sendMessage(msg);
         }
        // System.out.println(" ");
         int type = getRandom(0,30);
@@ -277,35 +310,64 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     public void shoot(){
         if(sendID < bulletCount){
             bullet[sendID].setToDraw(true);
-            bullet[sendID].initLocation(playerPosX1+ OurPlane.planeWidth/2-5,playerPosY1-bulletUpOffset);
+            int x = playerPosX1+ OurPlane.planeWidth/2-5;
+            int y = playerPosY1-bulletUpOffset;
+            bullet[sendID].initLocation(x,y);
             sendID++;
+            String msg = "Bullet1|"+sendID+"|"+x+"|"+y;
+            sendMessage(msg);
         }
         if(sendID == bulletCount){
             sendID = 0;
         }
     }
 
+
     public void collsion(){
         for(int i = 0; i < bulletCount; i++){
             for(int j = 0;j < enemyCount1;j++){
                 if(enemyPlane1[j].isAlive()&&bullet[i].posX>enemyPlane1[j].posX
-                        && bullet[i].posX<enemyPlane1[j].posX+20
+                        && bullet[i].posX<enemyPlane1[j].posX+40
                         && bullet[i].posY>enemyPlane1[j].posY
-                        && bullet[i].posY<enemyPlane1[j].posY+40
+                        && bullet[i].posY<enemyPlane1[j].posY+80
                         ){
                     enemyPlane1[j].lifePointMinus();
+                    String msg = "Enemy1|"+j+"|"+3+"|"+enemyPlane1[j].posX+"|"+enemyPlane1[j].posY;
+                    sendMessage(msg);
                     bullet[i].setToDraw(false);
+                }
+
+                if(enemyPlane1[j].isAlive()&&bullet2[i].posX>enemyPlane1[j].posX
+                        && bullet2[i].posX<enemyPlane1[j].posX+40
+                        && bullet2[i].posY>enemyPlane1[j].posY
+                        && bullet2[i].posY<enemyPlane1[j].posY+80
+                        ){
+                    enemyPlane1[j].lifePointMinus();
+                    String msg = "Enemy1|"+j+"|"+3+"|"+enemyPlane1[j].posX+"|"+enemyPlane1[j].posY;
+                    sendMessage(msg);
+                    bullet2[i].setToDraw(false);
                 }
             }
 
             for(int j = 0;j < enemyCount2;j++){
                 if(enemyPlane2[j].isAlive()&&bullet[i].posX>enemyPlane2[j].posX
-                        && bullet[i].posX<enemyPlane2[j].posX+20
+                        && bullet[i].posX<enemyPlane2[j].posX+40
                         && bullet[i].posY>enemyPlane2[j].posY
-                        && bullet[i].posY<enemyPlane2[j].posY+40){
+                        && bullet[i].posY<enemyPlane2[j].posY+80){
                     enemyPlane2[j].lifePointMinus();
-                    bullet[i].initLocation(-50,-50); // double kill
+                    String msg = "Enemy2|"+j+"|"+3+"|"+enemyPlane2[j].posX+"|"+enemyPlane2[j].posY;
+                    sendMessage(msg);
                     bullet[i].setToDraw(false);
+                }
+
+                if(enemyPlane2[j].isAlive()&&bullet2[i].posX>enemyPlane2[j].posX
+                        && bullet2[i].posX<enemyPlane2[j].posX+40
+                        && bullet2[i].posY>enemyPlane2[j].posY
+                        && bullet2[i].posY<enemyPlane2[j].posY+80){
+                    enemyPlane2[j].lifePointMinus();
+                    String msg = "Enemy2|"+j+"|"+3+"|"+enemyPlane2[j].posX+"|"+enemyPlane2[j].posY;
+                    sendMessage(msg);
+                    bullet2[i].setToDraw(false);
                 }
             }
 
@@ -316,7 +378,20 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                         && bullet[i].posY<enemyPlane3[j].posY+40
                         ){
                     enemyPlane3[j].lifePointMinus();
+                    String msg = "Enemy3|"+j+"|"+3+"|"+enemyPlane3[j].posX+"|"+enemyPlane3[j].posY;
+                    sendMessage(msg);
                     bullet[i].setToDraw(false);
+                }
+
+                if(enemyPlane3[j].isAlive()&&bullet2[i].posX>enemyPlane3[j].posX
+                        && bullet2[i].posX<enemyPlane3[j].posX+20
+                        && bullet2[i].posY>enemyPlane3[j].posY
+                        && bullet2[i].posY<enemyPlane3[j].posY+40
+                        ){
+                    enemyPlane3[j].lifePointMinus();
+                    String msg = "Enemy3|"+j+"|"+3+"|"+enemyPlane3[j].posX+"|"+enemyPlane3[j].posY;
+                    sendMessage(msg);
+                    bullet2[i].setToDraw(false);
                 }
             }
         }
@@ -361,8 +436,19 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             playerPosY1 =screenHeight - OurPlane.planeHeight ;
         }
         player1.updateLocation(playerPosX1,playerPosY1);
+        String msg = "Player1|"+playerPosX1+"|"+playerPosY1;
+        sendMessage(msg);
     }
 
+    //  Protocol:
+    //   Rx: "Player1|x|y"
+    //   Rx:"Enemy1|indice|[alive/death/hit by bullet]|x|y"
+    //
+    //
+
+    public void sendMessage(String msg){
+        os.println(msg);
+    }
     public void keyReleased(KeyEvent e){}
 
     public void keyTyped(KeyEvent e){
@@ -376,11 +462,15 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                 @Override
                 public void run() {
                     try{
+                        System.out.println("Listening port "+port);
                         server = new ServerSocket(port);
                         socket = server.accept();
+                        System.out.println("Accept Connection!");
                     }catch (IOException e){
                         e.printStackTrace();
                     }
+                    connectThread = new ConnectThread();
+                    connectThread.start();
                 }
             }).start();
         }catch (Exception e){
@@ -388,23 +478,14 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
         }
     }
     private class ConnectThread extends Thread{
-        private int m_port;
-
-        public ConnectThread(int port){
-            m_port = port;
-        }
-
         public void run(){
-            try{
-
-                System.out.println("Hello?");
+              try{
                 is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                os = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                isRunning = true;
+                os = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()),true);
                 while (true){
+
                     try{
                         String s1 = is.readLine();
-//                        String s2 = is.readLine();
                         if(s1 == null){
                             continue;
                         }
@@ -417,7 +498,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                             System.exit(0); // ？
                         }
                         if(s1.startsWith("Player2")){
-                            String ss[] = new String[2];
+                            String ss[] = new String[3];
                             ss = s1.split("\\|");
                             int x = Integer.parseInt(ss[1]);
                             int y = Integer.parseInt(ss[2]);
@@ -428,9 +509,10 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                         e.printStackTrace();
                     }
                 }
-            }catch (IOException e){
-                e.printStackTrace();
-            }
+
+              }catch (IOException e){
+                  e.printStackTrace();
+              }
         }
 
     }

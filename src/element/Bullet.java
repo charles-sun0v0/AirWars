@@ -46,6 +46,9 @@ public class Bullet {
 
     public void setToDraw(boolean toDraw) {
         this.toDraw = toDraw;
+        if(!toDraw){
+            initLocation(-50,-50);
+        }
     }
 
     public void updateBullet(){

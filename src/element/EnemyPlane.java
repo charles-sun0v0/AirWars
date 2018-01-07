@@ -64,7 +64,12 @@ public class EnemyPlane extends Plane {
         if(lifePoint == 0){
             live_state = LIVE_STATE.DEATH_STATE;
             frameID = 1;
+            if(ENEMYPLNE_CATECORY == 2)
+               lifePoint = 2; // Death and relief
+            else
+               lifePoint = 1;
         }
+
     }
     public void setDeath(){
         live_state = LIVE_STATE.DEATH_STATE;
@@ -76,4 +81,17 @@ public class EnemyPlane extends Plane {
         return live_state==LIVE_STATE.DEATH_STATE;
     }
     public boolean isAlive(){return live_state==LIVE_STATE.ALIVE_STATE;}
+    public void setProperty(int alive, int x, int y){
+        if(alive == 1){
+            live_state = LIVE_STATE.ALIVE_STATE;
+        }else if(alive == 0){
+            live_state = LIVE_STATE.DEATH_STATE;
+        }else{
+            lifePointMinus();
+        }
+        posX = x;
+        posY = y;
+
+
+    }
 }

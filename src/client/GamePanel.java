@@ -54,13 +54,19 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     private Bullet bullet[] = null;
     private long shootTime = 0L;
     private int sendID = 0;
+
+    // Bullet2
+    private  int bulletCount2 = 15;
+    private Bullet bullet2[] = null;
+    private int sendID2 = 0;
     private final int bulletUpOffset = 10;
     private final int bulletLeftOffset = 10;
+
 
     // Thread
     private Thread thread = null;
     private boolean isRunning = false;
-    private SetupConnection setupConnection = null;
+    private ConnectThread connectThread = null;
 
     // sever and socket
     //socket
@@ -69,19 +75,15 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     private BufferedReader is;
     private PrintWriter os;
 
-    // message
-    private String message = "";
-
     public GamePanel(String ip,int port){
         setPreferredSize(new Dimension(screenWidth,screenHeight));
         setFocusable(true);
         addKeyListener(this);
-
-        message = "hello server!";
-        setupConnection = new SetupConnection(ip,port);
-        setupConnection.start();
-
         init();
+
+        listenServer(ip,port);
+
+        isRunning = true;
         thread = new Thread(this);
      // start game
         thread.start();
@@ -130,7 +132,10 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             bullet[i] = new Bullet();
         }
 
-        shootTime = System.currentTimeMillis();
+        bullet2 = new Bullet[bulletCount2];
+        for(int i =0; i < bulletCount2;i++){
+            bullet2[i] = new Bullet();
+        }
     }
 
     public void run(){
@@ -167,6 +172,10 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             bullet[i].drawBullet(g,this);
         }
 
+        for(int i =0; i < bulletCount2;i++){
+            bullet2[i].drawBullet(g,this);
+        }
+
         for(int i = 0; i < enemyCount1;i++){
             enemyPlane1[i].drawPlane(g,this);
 
@@ -199,11 +208,9 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             bullet[i].updateBullet();
         }
 
-        // TODO: enemmy
-        updateEnemy();
 
         // TODO: collision
-        collsion();
+//        collsion();
     }
 
     public void judgeEdge(EnemyPlane enemyPlane){
@@ -361,45 +368,122 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             playerPosY2 =screenHeight - OurPlane.planeHeight ;
         }
         player2.updateLocation(playerPosX2,playerPosY2);
+        String msg = "Player2|"+playerPosX2+"|"+playerPosY2;
+        sendMessage(msg);
     }
-
+    public void sendMessage(String msg){
+        os.println(msg);
+    }
     public void keyReleased(KeyEvent e){}
 
     public void keyTyped(KeyEvent e){
 
     }
 
-    private class SetupConnection extends Thread{
-
-        private String m_ip;
-        private int m_port;
-
-        public SetupConnection(String ip, int port){
-            m_ip = ip;
-            m_port = port;
-        }
-
-        @Override
-        public void run(){
-            try {
-                socket = new Socket(m_ip, m_port);
-                is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                os = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
-                isRunning = true;
-                os.println(message);
-                while (true){
+    private void listenServer(String ip, int port){
+        try{
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
                     try{
-                    Thread.sleep(500);
-                    }catch (InterruptedException e){
+                        System.out.println("Connect port "+ip+":"+port);
+                        socket = new Socket(ip,port);
+
+                    }catch (IOException e){
                         e.printStackTrace();
                     }
-                    os.println(message);
+                    System.out.println("Accept Connection!");
+                    connectThread = new ConnectThread();
+                    connectThread.start();
+                }
+            }).start();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    private class ConnectThread extends Thread{
+        public void run(){
+            try{
+                is = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                os = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()),true);
+                while (true){
+                    try{
+
+                       String s1 = is.readLine();
+
+                        if(s1 == null){
+                            continue;
+                        }
+                        System.out.println(s1);
+                        if(s1.startsWith("Close")){
+                            socket.close();
+                            is.close();
+                            os.close();
+                            // Todo:
+                            System.exit(0); // ？
+                        }
+                        if(s1.startsWith("Player1")){
+                            String ss[] = new String[3];
+                            ss = s1.split("\\|");
+                            int x = Integer.parseInt(ss[1]);
+                            int y = Integer.parseInt(ss[2]);
+                            player1.updateLocation(x,y);
+                        }
+
+                        if(s1.startsWith("Enemy1")){
+                            String ss[] = new  String[5];
+                            ss = s1.split("\\|");
+                            int index = Integer.parseInt(ss[1]);
+                            int isAliveOrHit = Integer.parseInt(ss[2]);
+                            int x = Integer.parseInt(ss[3]);
+                            int y = Integer.parseInt(ss[4]);
+                            enemyPlane1[index].setProperty(isAliveOrHit,x,y);
+                        }
+
+                        if(s1.startsWith("Enemy2")){
+                            String ss[] = new  String[5];
+                            ss = s1.split("\\|");
+                            int index = Integer.parseInt(ss[1]);
+                            int isAliveOrHit = Integer.parseInt(ss[2]);
+                            int x = Integer.parseInt(ss[3]);
+                            int y = Integer.parseInt(ss[4]);
+                            enemyPlane2[index].setProperty(isAliveOrHit,x,y);
+                        }
+
+                        if(s1.startsWith("Enemy3")){
+                            String ss[] = new  String[5];
+                            ss = s1.split("\\|");
+                            int index = Integer.parseInt(ss[1]);
+                            int isAliveOrHit = Integer.parseInt(ss[2]);
+                            int x = Integer.parseInt(ss[3]);
+                            int y = Integer.parseInt(ss[4]);
+                            enemyPlane3[index].setProperty(isAliveOrHit,x,y);
+                        }
+
+                        if(s1.startsWith("Bullet1")){
+                            String ss[] = new  String[4];
+                            ss = s1.split("\\|");
+                            int index = Integer.parseInt(ss[1]);
+                            int x = Integer.parseInt(ss[2]);
+                            int y = Integer.parseInt(ss[3]);
+
+                            sendID = index;
+                            bullet[index].setToDraw(true);
+                            bullet[index].initLocation(x,y);
+
+                            
+                        }
+
+                    }catch(IOException e){
+                        e.printStackTrace();
+                    }
                 }
 
             }catch (IOException e){
                 e.printStackTrace();
             }
         }
+
     }
 
 

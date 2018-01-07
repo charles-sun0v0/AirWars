@@ -11,7 +11,7 @@ public class TestFrame extends JFrame{
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
 
-        GamePanel gamePanel = new GamePanel("127.0.0.1",10001);
+        GamePanel gamePanel = new GamePanel(dialog.getIp(),dialog.getPort());
         Container container = getContentPane();
         container.add(gamePanel);
         setLocationRelativeTo(null);
