@@ -2,8 +2,7 @@ package server;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.URL;
@@ -75,11 +74,23 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     private PrintWriter os;
      private ConnectThread connectThread;
 
-    public GamePanel(int port){
+
+//  score
+    private int score1 = 0;
+    private int score2 = 0;
+    private int HighScore = 0;
+
+    // Game_State
+    private enum GameState{GAME_START,GAME_END,GAME_PASUE};
+
+    private GameState gameState = GameState.GAME_END;
+
+
+    public GamePanel(int port,JFrame jFrame){
         setPreferredSize(new Dimension(screenWidth,screenHeight));
         setFocusable(true);
         addKeyListener(this);
-
+        myEvent(jFrame);
         init();
 
         // Trick !!! need synchronized () indeed
@@ -99,12 +110,12 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
         setVisible(true);
     }
 
-    public void init(){
-        try{
-            URL url = this.getClass().getResource("../image/bg01.jpg");
+    public void init() {
+        try {
+            URL url = this.getClass().getResource("/image/bg01.jpg");
             backgroudImage1 = Toolkit.getDefaultToolkit().getImage(url);
             backgroudImage2 = Toolkit.getDefaultToolkit().getImage(url);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -114,37 +125,38 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
         playerPosX1 = 180;
         playerPosY1 = 400;
         player1 = new OurPlane();
-        player1.initLocation(playerPosX1,playerPosY1);
+        player1.initLocation(playerPosX1, playerPosY1);
 
         player2 = new OurPlane();
         playerPosX2 = 120;
         playerPosY2 = 400;
-        player2.initLocation(playerPosX2,playerPosY2);
+        player2.initLocation(playerPosX2, playerPosY2);
         // enemy
         enemyPlane1 = new EnemyPlane[enemyCount1];
-        for (int i = 0; i < enemyCount1; i++){
+        for (int i = 0; i < enemyCount1; i++) {
             enemyPlane1[i] = new EnemyPlane(1);
         }
 
         enemyPlane2 = new EnemyPlane[enemyCount2];
-        for(int i = 0; i < enemyCount2; i++){
+        for (int i = 0; i < enemyCount2; i++) {
             enemyPlane2[i] = new EnemyPlane(2);
         }
 
         enemyPlane3 = new EnemyPlane[enemyCount3];
-        for(int i = 0; i < enemyCount3; i++){
+        for (int i = 0; i < enemyCount3; i++) {
             enemyPlane3[i] = new EnemyPlane(3);
         }
 
         bullet = new Bullet[bulletCount];
-        for(int i =0; i < bulletCount;i++){
+        for (int i = 0; i < bulletCount; i++) {
             bullet[i] = new Bullet();
         }
 
         bullet2 = new Bullet[bulletCount2];
-        for(int i =0; i < bulletCount2;i++){
+        for (int i = 0; i < bulletCount2; i++) {
             bullet2[i] = new Bullet();
         }
+
 
 
     }
@@ -180,6 +192,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     }
 
     public void paint(Graphics g){
+        if(gameState == GameState.GAME_START){
         g.drawImage(backgroudImage1,0,backgroudPosY1,screenWidth,screenHeight,this);
         g.drawImage(backgroudImage2,0,backgroudPosY2,screenWidth,screenHeight,this);
         if(player1.lifePoint>0){
@@ -210,6 +223,18 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             enemyPlane3[i].drawPlane(g,this);
         }
 
+        g.setFont(new Font("Times New Roman",0,25));
+        g.setColor(Color.PINK);
+        g.drawString("2UP",10,30);
+        g.drawString(String.valueOf(score2),10,50);
+
+
+        g.drawString("HIGHSCORE",80,30);
+        g.drawString(String.valueOf(HighScore),120,50);
+
+        g.drawString("1UP",250,30);
+        g.drawString(String.valueOf(score1),250,50);
+        }
     }
 
     public void updateBg(){
@@ -261,8 +286,14 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
 
        // System.out.println(" ");
         for(int i = 0; i < enemyCount3;i++){
-            enemyPlane3[i].updateLocation();
-       //     System.out.print(enemyPlane3[i].posY);
+            if(player1.isAlive()||player2.isAlive()){
+                if (i % 2 == 0)
+                    enemyPlane3[i].getTarget(player1);
+                else
+                    enemyPlane3[i].getTarget(player2);
+            }else{
+                enemyPlane3[i].updateLocation();
+            }
             judgeEdge(enemyPlane3[i]);
             String msg = "Enemy3|"+i+"|"+((enemyPlane3[i].isAlive())?1:0)+"|"+enemyPlane3[i].posX+"|"+enemyPlane3[i].posY;
             sendMessage(msg);
@@ -339,6 +370,8 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                     bullet[i].setToDraw(false);
                     msg = "HitBullet1|"+i;
                     sendMessage(msg);
+
+                    score1++;
                 }
 
                 if(enemyPlane1[j].isAlive()&&bullet2[i].posX>enemyPlane1[j].posX
@@ -350,6 +383,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                     String msg = "Enemy1|"+j+"|"+3+"|"+enemyPlane1[j].posX+"|"+enemyPlane1[j].posY;
                     sendMessage(msg);
                     bullet2[i].setToDraw(false);
+                    score2++;
                 }
             }
 
@@ -364,6 +398,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                     bullet[i].setToDraw(false);
                     msg = "HitBullet1|"+i;
                     sendMessage(msg);
+                    score1++;
                 }
 
                 if(enemyPlane2[j].isAlive()&&bullet2[i].posX>enemyPlane2[j].posX
@@ -374,6 +409,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                     String msg = "Enemy2|"+j+"|"+3+"|"+enemyPlane2[j].posX+"|"+enemyPlane2[j].posY;
                     sendMessage(msg);
                     bullet2[i].setToDraw(false);
+                    score2++;
                 }
             }
 
@@ -389,6 +425,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                     bullet[i].setToDraw(false);
                     msg = "HitBullet1|"+i;
                     sendMessage(msg);
+                    score1++;
                 }
 
                 if(enemyPlane3[j].isAlive()&&bullet2[i].posX>enemyPlane3[j].posX
@@ -400,11 +437,96 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                     String msg = "Enemy3|"+j+"|"+3+"|"+enemyPlane3[j].posX+"|"+enemyPlane3[j].posY;
                     sendMessage(msg);
                     bullet2[i].setToDraw(false);
+                    score2++;
                 }
             }
+            String message = "Score|"+score1+"|"+score2;
+            sendMessage(message);
         }
 
 
+        for(int i = 0; i < enemyCount1; i++){
+            if(enemyPlane1[i].isAlive()&&player1.isAlive()&&player1.attcked(enemyPlane1[i])){
+                enemyPlane1[i].lifePointMinus();
+                String msg = "Enemy1|"+i+"|"+3+"|"+enemyPlane1[i].posX+"|"+enemyPlane1[i].posY;
+                sendMessage(msg);
+                msg = "Attacked|"+1+"|"+player1.lifePoint;
+                sendMessage(msg);
+            }
+            if(enemyPlane1[i].isAlive()&&player2.isAlive()&&player2.attcked(enemyPlane1[i])){
+                enemyPlane1[i].lifePointMinus();
+                String msg = "Enemy1|"+i+"|"+3+"|"+enemyPlane1[i].posX+"|"+enemyPlane1[i].posY;
+                sendMessage(msg);
+
+                msg = "Attacked|"+2+"|"+player2.lifePoint;
+                sendMessage(msg);
+            }
+        }
+
+        for(int i = 0; i < enemyCount2; i++){
+            if(enemyPlane2[i].isAlive()&&player1.isAlive()&&player1.attcked(enemyPlane2[i])){
+                enemyPlane2[i].lifePointMinus();
+                String msg = "Enemy2|"+i+"|"+3+"|"+enemyPlane2[i].posX+"|"+enemyPlane2[i].posY;
+                sendMessage(msg);
+
+                msg = "Attacked|"+1+"|"+player1.lifePoint;
+                sendMessage(msg);
+            }
+            if(enemyPlane2[i].isAlive()&&player2.isAlive()&&player2.attcked(enemyPlane2[i])){
+                enemyPlane2[i].lifePointMinus();
+                String msg = "Enemy1|"+i+"|"+3+"|"+enemyPlane2[i].posX+"|"+enemyPlane2[i].posY;
+                sendMessage(msg);
+
+
+                msg = "Attacked|"+2+"|"+player2.lifePoint;
+                sendMessage(msg);
+            }
+        }
+
+        for(int i = 0; i < enemyCount1; i++){
+            if(enemyPlane3[i].isAlive()&&player1.isAlive()&&player1.attcked(enemyPlane3[i])){
+                enemyPlane3[i].lifePointMinus();
+                String msg = "Enemy1|"+i+"|"+3+"|"+enemyPlane3[i].posX+"|"+enemyPlane3[i].posY;
+                sendMessage(msg);
+
+
+                msg = "Attacked|"+1+"|"+player1.lifePoint;
+                sendMessage(msg);
+            }
+            if(enemyPlane3[i].isAlive()&&player2.isAlive()&&player2.attcked(enemyPlane3[i])){
+                enemyPlane3[i].lifePointMinus();
+                String msg = "Enemy1|"+i+"|"+3+"|"+enemyPlane3[i].posX+"|"+enemyPlane3[i].posY;
+                sendMessage(msg);
+
+
+                msg = "Attacked|"+2+"|"+player2.lifePoint;
+                sendMessage(msg);
+            }
+        }
+
+    }
+
+    public void myEvent(JFrame j){
+        j.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try{
+                    if(os!=null){
+                        os.println("Close");
+                        os.close();
+                    }
+                    if(is!=null)
+                    is.close();
+                    socket.close();
+                    server.close();
+                    System.exit(0);
+                }catch (IOException excp){
+                    System.exit(1);
+            //        excp.printStackTrace();
+                }
+
+            }
+        });
     }
     public void keyPressed(KeyEvent e){
         int key = e.getKeyCode();
@@ -426,6 +548,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                 break;
             }
             case KeyEvent.VK_SPACE:{
+                if(player1.isAlive())
                 shoot();
             }
             default:break;
@@ -474,6 +597,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                         server = new ServerSocket(port);
                         socket = server.accept();
                         System.out.println("Accept Connection!");
+                        gameState = GameState.GAME_START;
                     }catch (IOException e){
                         e.printStackTrace();
                     }
@@ -499,9 +623,9 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                         }
                         System.out.println(s1);
                         if(s1.startsWith("Close")){
-                            socket.close();
                             is.close();
                             os.close();
+                            socket.close();
                             // Todo:
                             System.exit(0); // ？
                         }
@@ -523,6 +647,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                             bullet2[index].setToDraw(true);
                             bullet2[index].initLocation(x,y);
                         }
+
                     }catch(IOException e){
                         e.printStackTrace();
                     }

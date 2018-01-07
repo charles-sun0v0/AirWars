@@ -6,7 +6,6 @@ import java.awt.*;
 public class TestFrame extends JFrame{
     public TestFrame(){
         setTitle("AirWars");
-
         GamePanel gamePanel = new GamePanel();
         Container container = getContentPane();
         container.add(gamePanel);

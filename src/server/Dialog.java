@@ -23,7 +23,7 @@ public class Dialog  extends JDialog implements ActionListener{
 
     public Dialog(JFrame parent){
         super(parent, "Airwars", true);
-
+        setSize(320,480);
         port_label = new JLabel("Port:");
         message_label = new JLabel();
         port_text = new JTextField(port, 15);

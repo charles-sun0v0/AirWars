@@ -5,17 +5,19 @@ import java.awt.*;
 
 public class TestFrame extends JFrame{
     public TestFrame(){
-        setTitle("AirWars");
+        setTitle("AirWars-Client");
         Dialog dialog = new Dialog(this);
         dialog.pack();
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
 
-        GamePanel gamePanel = new GamePanel(dialog.getIp(),dialog.getPort());
+        GamePanel gamePanel = new GamePanel(dialog.getIp(),dialog.getPort(),this);
         Container container = getContentPane();
         container.add(gamePanel);
-        setLocationRelativeTo(null);
+        setResizable(true);
         pack();
+        setLocationRelativeTo(null);
+
     }
 
     public static void main(String[] args) {

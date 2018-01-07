@@ -69,7 +69,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
 
     public void init(){
         try{
-            URL url = this.getClass().getResource("../image/bg01.jpg");
+            URL url = this.getClass().getResource("/image/bg01.jpg");
             backgroudImage1 = Toolkit.getDefaultToolkit().getImage(url);
             backgroudImage2 = Toolkit.getDefaultToolkit().getImage(url);
         }catch (Exception e){

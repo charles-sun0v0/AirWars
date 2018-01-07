@@ -5,7 +5,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Created by Allen on 2016/12/13.
  */
 public class Dialog extends JDialog implements ActionListener{
 
@@ -18,9 +17,9 @@ public class Dialog extends JDialog implements ActionListener{
     private JButton close;
 
     //info
-    private String ip;
+    private String ip = "127.0.0.1";
     private String port = "10000";
-    private String message = "Welcome to AirsWars!";
+    private String message = "Welcome to AirsWars! Default IP is localhost.";
 
 
     public Dialog(JFrame parent){
@@ -29,7 +28,7 @@ public class Dialog extends JDialog implements ActionListener{
         ip_label = new JLabel("Host IP:");
         port_label = new JLabel("Port:");
         message_label = new JLabel();
-        ip_text = new JTextField(15);
+        ip_text = new JTextField(ip,15);
         port_text = new JTextField(port, 15);
 
         sure = new JButton("确定");

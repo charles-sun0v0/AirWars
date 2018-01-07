@@ -33,7 +33,7 @@ public Plane(){
 //        }catch (Exception e){
 //            e.printStackTrace();
 //        }
-        URL url = this.getClass().getResource("../image/explode"+(i+1)+".gif");
+        URL url = this.getClass().getResource("/image/explode"+(i+1)+".gif");
 //        System.out.println(url);
         explodeImg[i] = Toolkit.getDefaultToolkit().getImage(url);
     }
@@ -49,5 +49,7 @@ public void drawExplode(Graphics g, JPanel panel){
         frameID++;
         return;
 }
+
+    public boolean isAlive(){return live_state==LIVE_STATE.ALIVE_STATE;}
 
 }

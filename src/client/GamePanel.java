@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -75,12 +77,24 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     private BufferedReader is;
     private PrintWriter os;
 
-    public GamePanel(String ip,int port){
+
+
+    //  score
+    private int score1 = 0;
+    private int score2 = 0;
+    private int HighScore = 0;
+
+
+    // Game_State
+    private enum GameState{GAME_START,GAME_END,GAME_PASUE};
+    private GameState gameState = GameState.GAME_END;
+
+    public GamePanel(String ip,int port,JFrame jFrame){
         setPreferredSize(new Dimension(screenWidth,screenHeight));
         setFocusable(true);
         addKeyListener(this);
         init();
-
+        myEvent(jFrame);
         listenServer(ip,port);
 
         isRunning = true;
@@ -92,7 +106,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
 
     public void init(){
         try{
-            URL url = this.getClass().getResource("../image/bg01.jpg");
+            URL url = this.getClass().getResource("/image/bg01.jpg");
             backgroudImage1 = Toolkit.getDefaultToolkit().getImage(url);
             backgroudImage2 = Toolkit.getDefaultToolkit().getImage(url);
         }catch (Exception e){
@@ -160,36 +174,50 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
     }
 
     public void paint(Graphics g){
-        g.drawImage(backgroudImage1,0,backgroudPosY1,screenWidth,screenHeight,this);
-        g.drawImage(backgroudImage2,0,backgroudPosY2,screenWidth,screenHeight,this);
-        if(player1.lifePoint>0){
-           player1.drawAlive(g,this);
-        }
-        if(player2.lifePoint>0){
-            player2.drawAlive(g,this);
-        }
-        for(int i =0; i < bulletCount;i++){
-            bullet[i].drawBullet(g,this);
-        }
 
-        for(int i =0; i < bulletCount2;i++){
-            bullet2[i].drawBullet(g,this);
+        if(gameState == GameState.GAME_START) {
+            g.drawImage(backgroudImage1, 0, backgroudPosY1, screenWidth, screenHeight, this);
+            g.drawImage(backgroudImage2, 0, backgroudPosY2, screenWidth, screenHeight, this);
+            if (player1.lifePoint > 0) {
+                player1.drawAlive(g, this);
+            }
+            if (player2.lifePoint > 0) {
+                player2.drawAlive(g, this);
+            }
+            for (int i = 0; i < bulletCount; i++) {
+                bullet[i].drawBullet(g, this);
+            }
+
+            for (int i = 0; i < bulletCount2; i++) {
+                bullet2[i].drawBullet(g, this);
+            }
+
+            for (int i = 0; i < enemyCount1; i++) {
+                enemyPlane1[i].drawPlane(g, this);
+
+            }
+
+            for (int i = 0; i < enemyCount2; i++) {
+                enemyPlane2[i].drawPlane(g, this);
+
+            }
+
+            for (int i = 0; i < enemyCount3; i++) {
+                enemyPlane3[i].drawPlane(g, this);
+            }
+
+            g.setFont(new Font("Times New Roman", 0, 25));
+            g.setColor(Color.PINK);
+            g.drawString("2UP", 10, 30);
+            g.drawString(String.valueOf(score2), 10, 50);
+
+
+            g.drawString("HIGHSCORE", 80, 30);
+            g.drawString(String.valueOf(HighScore), 120, 50);
+
+            g.drawString("1UP", 250, 30);
+            g.drawString(String.valueOf(score1), 250, 50);
         }
-
-        for(int i = 0; i < enemyCount1;i++){
-            enemyPlane1[i].drawPlane(g,this);
-
-        }
-
-        for(int i = 0; i < enemyCount2;i++){
-            enemyPlane2[i].drawPlane(g,this);
-
-        }
-
-        for(int i = 0; i < enemyCount3;i++){
-            enemyPlane3[i].drawPlane(g,this);
-        }
-
     }
 
     public void updateBg(){
@@ -340,6 +368,27 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
 
 
     }
+    public void myEvent(JFrame j){
+        j.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try{
+                    if(os!=null){
+                        os.println("Close");
+                        os.close();
+                    }
+                    if(is!=null)
+                        is.close();
+                    socket.close();
+                    System.exit(0);
+                }catch (IOException excp){
+                    excp.printStackTrace();
+                }
+
+            }
+        });
+    }
+
     public void keyPressed(KeyEvent e){
         int key = e.getKeyCode();
         switch (key){
@@ -360,6 +409,7 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                 break;
             }
             case KeyEvent.VK_K:{
+                if(player2.isAlive())
                 shoot2();
             }
             default:break;
@@ -398,11 +448,11 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                     try{
                         System.out.println("Connect port "+ip+":"+port);
                         socket = new Socket(ip,port);
-
                     }catch (IOException e){
                         e.printStackTrace();
                     }
                     System.out.println("Accept Connection!");
+                    gameState = GameState.GAME_START;
                     connectThread = new ConnectThread();
                     connectThread.start();
                 }
@@ -487,6 +537,26 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                             ss = s1.split("\\|");
                             sendID = Integer.parseInt(ss[1]);
                             bullet[sendID].setToDraw(false);
+                        }
+
+                        if(s1.startsWith("Attacked")){
+                            String ss[] = new String[3];
+                            ss = s1.split("\\|");
+                            int num = Integer.parseInt(ss[1]);
+                            int life = Integer.parseInt(ss[2]);
+                            if(num == 1){
+                                player1.setlifePoint(life);
+                            }else {
+                                player2.setlifePoint(life);
+
+                            }
+                        }
+
+                        if(s1.startsWith("Score")){
+                            String ss[] = new String[3];
+                            ss = s1.split("\\|");
+                            score1 = Integer.parseInt(ss[1]);
+                            score2 = Integer.parseInt(ss[2]);
                         }
 
                     }catch(IOException e){

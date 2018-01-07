@@ -42,14 +42,24 @@ public class EnemyPlane extends Plane {
     }
 
     public void updateLocation(){
-        if(ENEMYPLNE_CATECORY == 3)
-            return;      // TODO: track ours_plane, because the catecory is seftkilled-attck
-        else{
             if(live_state == LIVE_STATE.ALIVE_STATE){
                posY += PLNAE_STEP_Y;
             }
             return;
+
+    }
+
+    // attcak!
+    public void getTarget(OurPlane ourPlane){
+        int x = (ourPlane.posX+40 - posX)/40;
+        int y = (ourPlane.posY+40 - posY)/40;
+        posX += x;
+        posY += y;
+        if(x < 5){
+     //       posX += 10;
+            posY += 10;
         }
+
     }
     public void reset(){
         frameID = 0;
@@ -80,7 +90,7 @@ public class EnemyPlane extends Plane {
     public boolean isDeath(){
         return live_state==LIVE_STATE.DEATH_STATE;
     }
-    public boolean isAlive(){return live_state==LIVE_STATE.ALIVE_STATE;}
+
     public void setProperty(int alive, int x, int y){
         if(alive == 1){
             live_state = LIVE_STATE.ALIVE_STATE;
