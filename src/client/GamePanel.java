@@ -208,6 +208,10 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
             bullet[i].updateBullet();
         }
 
+        for (int i=0; i < bulletCount2;i++){
+            bullet2[i].updateBullet();
+        }
+
 
         // TODO: collision
 //        collsion();
@@ -281,17 +285,23 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
         return((Math.abs(new Random().nextInt()))%(upper-lower)+lower);
     }
 
-    public void shoot(){
-        if(sendID < bulletCount){
-            bullet[sendID].setToDraw(true);
-            bullet[sendID].initLocation(playerPosX1+ OurPlane.planeWidth/2-5,playerPosY1-bulletUpOffset);
-            sendID++;
+    public void shoot2(){
+        if(sendID2 < bulletCount2){
+            bullet2[sendID2].setToDraw(true);
+            int x = playerPosX2+ OurPlane.planeWidth/2-5;
+            int y = playerPosY2-bulletUpOffset;
+            bullet2[sendID2].initLocation(x,y);
+            String msg = "Bullet2|"+sendID2+"|"+x+"|"+y;
+            sendMessage(msg);
+            sendID2++;
         }
-        if(sendID == bulletCount){
-            sendID = 0;
+        if(sendID2 == bulletCount2){
+            sendID2 = 0;
         }
     }
 
+
+    // Not use
     public void collsion(){
         for(int i = 0; i < bulletCount; i++){
             for(int j = 0;j < enemyCount1;j++){
@@ -349,8 +359,8 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                 playerPosX2 += planStep;
                 break;
             }
-            case KeyEvent.VK_TAB:{
-                shoot();
+            case KeyEvent.VK_K:{
+                shoot2();
             }
             default:break;
         }
@@ -470,8 +480,13 @@ public class GamePanel extends JPanel implements Runnable,KeyListener{
                             sendID = index;
                             bullet[index].setToDraw(true);
                             bullet[index].initLocation(x,y);
+                        }
 
-                            
+                        if(s1.startsWith("HitBullet1")){
+                            String ss[] = new String[2];
+                            ss = s1.split("\\|");
+                            sendID = Integer.parseInt(ss[1]);
+                            bullet[sendID].setToDraw(false);
                         }
 
                     }catch(IOException e){
